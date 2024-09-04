@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 class HomeController extends Controller
 {
@@ -22,7 +24,25 @@ class HomeController extends Controller
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function index()
+    {  
+        $users = User::select("*")->whereNotNull('last_seen')->orderBy('last_seen', 'ASC')->get();
+        $current_user = User::select("*")->where('id',auth()->user()->id)->first();
+        return view('home',compact('users','current_user'));
+    }
+    public function profile($id)
     {
-        return view('home');
+        $user = User::where('id',$id)->first();
+
+        return view('profile',compact('user'));
+    }
+
+    public function updateProfileImg($id,Request $request){
+        $image = Storage::disk('public')->putFile('profile_images', request()->avatar);
+        $user = User::find($id);
+        $user->update([
+            'profile_image' => $image
+        ]);
+    
+        return redirect()->back();
     }
 }
